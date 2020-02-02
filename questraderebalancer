@@ -100,15 +100,22 @@ def get_internal_symbols(symbols):
     for symbol in symbols:
         symbol_id = questrade_api.get_id_from_symbol_name(symbol)
         symbol_id_dicts[symbol] = symbol_id
+
     return symbol_id_dicts
 
+def get_symbol_price(quote):
+    if quote['askPrice'] == None:
+        print("warning: using lastTradePrice instead of askPrice for {}".format(quote['symbol']))
+        return quote['lastTradePrice']
+    else:
+        return quote['askPrice']
 
 def get_symbol_quotes(symbol_ids):
     quotes = questrade_api.get_market_quotes(symbol_ids)
 
     debug({"get_symbol_quotes": quotes})
 
-    return {quote['symbol']: (quote['askPrice'] or quote['lastTradePrice']) for quote in quotes['quotes']}
+    return {quote['symbol']: get_symbol_price(quote) for quote in quotes['quotes']}
 
 
 def get_best_symbol(positions_total, target_ratios,
