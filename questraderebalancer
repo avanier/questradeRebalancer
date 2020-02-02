@@ -2,12 +2,17 @@
 
 import argparse
 import json
+import pprint
+import os
+import ast
+
 from api.QuestradeApi import QuestradeApi
 
 
 QUESTRADE_ECN = 0.0035
 DOLLAR_COST_AVERAGE = 1.0
 
+_debug = ast.literal_eval(os.getenv("DEBUG") or "False")
 questrade_api = QuestradeApi()
 
 DEFAULT_TARGET_RATIOS_FILE = "target_ratios.json"
@@ -41,6 +46,10 @@ sample_ratios = {
     }
 }
 
+def debug(hashmap):
+    if _debug == True:
+        pp = pprint.PrettyPrinter(width=70, compact=False)
+        pp.pprint(hashmap)
 
 def _read_target_ratio_file(path):
     with open(path, 'r') as f:
@@ -96,7 +105,7 @@ def get_internal_symbols(symbols):
 
 def get_symbol_quotes(symbol_ids):
     quotes = questrade_api.get_market_quotes(symbol_ids)
-    return {quote['symbol']: quote['askPrice'] for quote in quotes['quotes']}
+    debug({"get_symbol_quotes": quotes})
 
 
 def get_best_symbol(positions_total, target_ratios,
@@ -119,6 +128,9 @@ def get_best_symbol(positions_total, target_ratios,
     def calc_new_r2(position_info):
         position = position_info['position']
         symbol = position_info['to_buy']
+
+        debug({"calc_new_r2": symbol_quotes})
+
         new_ratio = (position + symbol_quotes[symbol]) / \
                     (positions_total + float(symbol_quotes[symbol]))
         target_ratio = position_info['ratio'] / 100.0
@@ -274,6 +286,7 @@ def something_rebalance(account_id, target_ratios, strategy=1, preview_only=Fals
 
     internal_symbols = get_internal_symbols(symbols)
     symbol_quotes = get_symbol_quotes(list(internal_symbols.values()))
+    debug({"symbol_quotes": symbol_quotes})
 
     # Get orders
     if strategy == 1:
