@@ -105,7 +105,10 @@ def get_internal_symbols(symbols):
 
 def get_symbol_quotes(symbol_ids):
     quotes = questrade_api.get_market_quotes(symbol_ids)
+
     debug({"get_symbol_quotes": quotes})
+
+    return {quote['symbol']: (quote['askPrice'] or quote['lastTradePrice']) for quote in quotes['quotes']}
 
 
 def get_best_symbol(positions_total, target_ratios,
